@@ -1,22 +1,36 @@
-from  flask_pymongo import  pymongo
+from flask_pymongo import pymongo
 
-# CONNECTION_STRING = "mongodb+srv://admin:admin#0007@cluster0.cz5ig.mongodb.net/<dbname>?retryWrites=true&w=majority"
-# client = pymongo.MongoClient(CONNECTION_STRING)
-# database = client.get_database("confluence")
-# collection = pymongo.collection.Collection("users")
 
-def connect_database(connection_string, database, collection_name):
-    client = pymongo.MongoClient(connection_string)
+def get_client(database):
+    client = pymongo.MongoClient("localhost", 27017)
     db = client.get_database(database)
-    collection = pymongo.collection.Collection(db, collection_name)
-    return  collection
+    return db
 
 
-def find_one_record():
-    pass
+class GenericDao:
+    def __init__(self, collection_name):
+        self.client = get_client("ginnypages")[collection_name]
+        self.collection = collection_name
 
-def find_records():
-    pass
+    def find_one_record(self, filter_query, projection={}):
+        record = self.client.find_one(filter_query, projection)
+        return record
 
+    def find_records(self, filter_query={}, projection={}):
+        all_records = []
+        records = self.client.find(filter_query, projection)
+        for record in records:
+            all_records.append(record)
+        return all_records
 
+    def insert_record(self, document):
+        curser = self.client.insert_one(document)
+        return curser.acknowledged
 
+    def delete_record(self, filter_query, projection={}):
+        record = self.client.delete_one(filter_query, projection)
+        return record
+
+    def update_record(self, document, filter_query={}, projection={}):
+        record = self.client.find_one_and_update(filter_query, {"$set": document}, projection)
+        return record
