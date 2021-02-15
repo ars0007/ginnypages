@@ -53,7 +53,7 @@ def user_create(user_payload):
     GenericDao_obj = GenericDao("users")
     res = GenericDao_obj.insert_record(user_payload)
     if res:
-        return prepare_response(201, message="success")
+        return prepare_response(201, message="user successfully registered")
     else:
         return prepare_response(500, error="failure")
 
@@ -65,7 +65,7 @@ def user_update(payload, user_id):
     GenericDao_object = GenericDao("users")
     response = GenericDao_object.update_record(payload, filter_query={"user_id": user_id})
     if response:
-        return prepare_response(201, message="success")
+        return prepare_response(200, message="user successfully updated")
     else:
         return prepare_response(500, error="failure")
 
@@ -79,8 +79,17 @@ def user_signin(payload):
         match = verify_password(password, res["password"])
         if match:
             token = encode_auth_token(res["user_id"])
-            return prepare_response(201, message="Successfully logged in", body=token)
+            return prepare_response(200, message="Successfully logged in", body=token)
         else:
             return prepare_response(500, message="wrong email or password")
     else:
         return prepare_response(404, error="user not found")
+
+
+def user_delete(user_id):
+    GenericDao_obj = GenericDao("users")
+    response = GenericDao_obj.delete_record(filter_query={"user_id": user_id}, projection={"_id": 0})
+    if (response):
+        return prepare_response(200, message="user deleted successfully")
+    else:
+        return prepare_response(500, error="error while deleting user")

@@ -7,9 +7,6 @@ API = Namespace("users", __name__)
 
 @API.route("/")
 class UsersApi(Resource):
-    def get(self):
-        return "get", 200
-
     def post(self):
         request_payload = request.get_json()
         response = user_service.user_create(request_payload)
@@ -18,8 +15,9 @@ class UsersApi(Resource):
 
 @API.route("/<string:username>")
 class SingleUserApi(Resource):
-    def get(self, username):
-        print(username)
+    def delete(self, username):
+        response = user_service.user_delete(username)
+        return response, 200
 
     def put(self, username):
         request_payload = request.get_json()

@@ -28,7 +28,7 @@ class GenericDao:
         return curser.acknowledged
 
     def delete_record(self, filter_query, projection={}):
-        record = self.client.delete_one(filter_query, projection)
+        record = self.client.find_one_and_delete(filter_query, projection)
         return record
 
     def update_record(self, document, filter_query={}, projection={}):
