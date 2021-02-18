@@ -3,6 +3,7 @@ from uuid import uuid4
 from dao.dao import GenericDao
 from passlib.hash import pbkdf2_sha256
 import jwt
+import utils.utils as utils
 
 
 def hash_password(password):
@@ -14,16 +15,7 @@ def verify_password(password, hashed_password):
     return pbkdf2_sha256.verify(password, hashed_password)
 
 
-def prepare_response(status_code, message=None, body=None, error=None):
-    return {
-        "statusCode": status_code,
-        "message": message,
-        "body": body,
-        "error": error
-    }
-
-
-def encode_auth_token(user_id):
+def encode_auth_token(user_id, email):
     """
     Generates the Auth Token
     :return: string
@@ -31,7 +23,7 @@ def encode_auth_token(user_id):
     payload = {
         'exp': datetime.datetime.utcnow() + datetime.timedelta(minutes=30),
         'iat': datetime.datetime.utcnow(),
-        'sub': user_id
+        'sub': {"email": email, "user_id": user_id}
     }
 
     return jwt.encode(
@@ -41,11 +33,6 @@ def encode_auth_token(user_id):
     )
 
 
-def decode_auth_token(auth_token):
-    payload = jwt.decode(auth_token, 'SECRET_KEY')
-    return payload['sub']
-
-
 def user_create(user_payload):
     user_payload["user_id"] = str(uuid4())
     hashed_password = hash_password(user_payload["password"])
@@ -53,9 +40,9 @@ def user_create(user_payload):
     GenericDao_obj = GenericDao("users")
     res = GenericDao_obj.insert_record(user_payload)
     if res:
-        return prepare_response(201, message="user successfully registered")
+        return utils.prepare_response(201, message="user successfully registered")
     else:
-        return prepare_response(500, error="failure")
+        return utils.prepare_response(500, error="failure")
 
 
 def user_update(payload, user_id):
@@ -65,9 +52,9 @@ def user_update(payload, user_id):
     GenericDao_object = GenericDao("users")
     response = GenericDao_object.update_record(payload, filter_query={"user_id": user_id})
     if response:
-        return prepare_response(200, message="user successfully updated")
+        return utils.prepare_response(200, message="user successfully updated")
     else:
-        return prepare_response(500, error="failure")
+        return utils.prepare_response(500, error="failure")
 
 
 def user_signin(payload):
@@ -78,18 +65,18 @@ def user_signin(payload):
     if res:
         match = verify_password(password, res["password"])
         if match:
-            token = encode_auth_token(res["user_id"])
-            return prepare_response(200, message="Successfully logged in", body=token)
+            token = encode_auth_token(res["user_id"], res["email"])
+            return utils.prepare_response(200, message="Successfully logged in", body=token)
         else:
-            return prepare_response(500, message="wrong email or password")
+            return utils.prepare_response(500, message="wrong email or password")
     else:
-        return prepare_response(404, error="user not found")
+        return utils.prepare_response(404, error="user not found")
 
 
 def user_delete(user_id):
     GenericDao_obj = GenericDao("users")
     response = GenericDao_obj.delete_record(filter_query={"user_id": user_id}, projection={"_id": 0})
     if (response):
-        return prepare_response(200, message="user deleted successfully")
+        return utils.prepare_response(200, message="user deleted successfully")
     else:
-        return prepare_response(500, error="error while deleting user")
+        return utils.prepare_response(500, error="error while deleting user")
