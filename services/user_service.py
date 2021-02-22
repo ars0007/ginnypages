@@ -50,9 +50,9 @@ def user_update(payload, user_id):
     payload["password"] = hashed_password
     payload["user_id"] = user_id
     GenericDao_object = GenericDao("users")
-    response = GenericDao_object.update_record(payload, filter_query={"user_id": user_id})
+    response = GenericDao_object.update_record(payload, filter_query={"user_id": user_id}, projection={"_id": 0})
     if response:
-        return utils.prepare_response(200, message="user successfully updated")
+        return utils.prepare_response(200, message="user successfully updated", body=response)
     else:
         return utils.prepare_response(500, error="failure")
 
@@ -77,6 +77,6 @@ def user_delete(user_id):
     GenericDao_obj = GenericDao("users")
     response = GenericDao_obj.delete_record(filter_query={"user_id": user_id}, projection={"_id": 0})
     if (response):
-        return utils.prepare_response(200, message="user deleted successfully")
+        return utils.prepare_response(200, message="user deleted successfully", body=response)
     else:
         return utils.prepare_response(500, error="error while deleting user")

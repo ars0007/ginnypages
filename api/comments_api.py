@@ -17,11 +17,13 @@ class CommentsApi(Resource):
         response = comment_service.update_comment(request_payload, pageId)
         return response, 200
 
-    def get(self):
-        response = comment_service.get_comments()
+    def get(self, pageId):
+        response = comment_service.get_comments(pageId)
         return response, 200
 
 
-@API.route("/<string:pageid>")
+@API.route("/comment/<string:commentId>")
 class SingleCommentApi(Resource):
-    pass
+    def delete(self, commentId):
+        response = comment_service.delete_comment(commentId)
+        return response, 200
