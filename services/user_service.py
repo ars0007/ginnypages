@@ -33,16 +33,26 @@ def encode_auth_token(user_id, email):
     )
 
 
+def check_email_exist(email):
+    user = GenericDao("users").find_one_record(filter_query={"email": email}, projection={"_id": 0, "password": 0})
+    return user
+
+
 def user_create(user_payload):
     user_payload["user_id"] = str(uuid4())
-    hashed_password = hash_password(user_payload["password"])
-    user_payload["password"] = hashed_password
-    GenericDao_obj = GenericDao("users")
-    res = GenericDao_obj.insert_record(user_payload)
-    if res:
-        return utils.prepare_response(201, message="user successfully registered")
+    email = user_payload["email"]
+    user = check_email_exist(email)
+    if user:
+        return utils.prepare_response(401, error="Email already exist", body=user)
     else:
-        return utils.prepare_response(500, error="failure")
+        hashed_password = hash_password(user_payload["password"])
+        user_payload["password"] = hashed_password
+        GenericDao_obj = GenericDao("users")
+        res = GenericDao_obj.insert_record(user_payload)
+        if res:
+            return utils.prepare_response(201, message="user successfully registered")
+        else:
+            return utils.prepare_response(500, error="failure")
 
 
 def user_update(payload, user_id):
@@ -50,7 +60,8 @@ def user_update(payload, user_id):
     payload["password"] = hashed_password
     payload["user_id"] = user_id
     GenericDao_object = GenericDao("users")
-    response = GenericDao_object.update_record(payload, filter_query={"user_id": user_id}, projection={"_id": 0})
+    response = GenericDao_object.update_record(payload, filter_query={"user_id": user_id},
+                                               projection={"_id": 0, "password": 0})
     if response:
         return utils.prepare_response(200, message="user successfully updated", body=response)
     else:
@@ -61,7 +72,7 @@ def user_signin(payload):
     email = payload["email"]
     password = payload["password"]
     GenericDao_object = GenericDao("users")
-    res = GenericDao_object.find_one_record(filter_query={"email": email}, projection={"_id": 0})
+    res = GenericDao_object.find_one_record(filter_query={"email": email}, projection={"_id": 0, "password": 0})
     if res:
         match = verify_password(password, res["password"])
         if match:
@@ -75,7 +86,7 @@ def user_signin(payload):
 
 def user_delete(user_id):
     GenericDao_obj = GenericDao("users")
-    response = GenericDao_obj.delete_record(filter_query={"user_id": user_id}, projection={"_id": 0})
+    response = GenericDao_obj.delete_record(filter_query={"user_id": user_id}, projection={"_id": 0, "password": 0})
     if (response):
         return utils.prepare_response(200, message="user deleted successfully", body=response)
     else:
